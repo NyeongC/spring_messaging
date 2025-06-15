@@ -1,8 +1,16 @@
 package coffeehouse.modules.brew;
 
+import coffeehouse.modules.brew.domain.service.OrderSheetSubmission;
+import coffeehouse.modules.brew.domain.service.OrderSheetSubmission.OrderSheetForm;
+import coffeehouse.modules.brew.domain.OrderId;
+import coffeehouse.modules.order.domain.message.BrewRequestCommand;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageHandler;
+import org.springframework.messaging.MessagingException;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -21,5 +29,21 @@ public @interface EnableBrewModule {
     @ComponentScan
     class BrewModuleConfiguration {
 
+
+        @Bean
+        MessageHandler messageHandler(OrderSheetSubmission orderSheetSubmission) {
+            var messageHandler = new MessageHandler() {
+                @Override
+                public void handleMessage(Message<?> message) throws MessagingException {
+                    var command = (BrewRequestCommand) message.getPayload();
+                    var brewOrderId = new OrderId(command.orderId().value());
+
+                    orderSheetSubmission.submit(new OrderSheetForm(brewOrderId));
+
+                }
+            };
+
+            return messageHandler;
+        }
     }
 }
