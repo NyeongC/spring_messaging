@@ -9,6 +9,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.MessagingException;
 
@@ -16,6 +17,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Observable;
 
 /**
  * @author springrunner.kr@gmail.com
@@ -31,7 +33,7 @@ public @interface EnableBrewModule {
 
 
         @Bean
-        MessageHandler messageHandler(OrderSheetSubmission orderSheetSubmission) {
+        MessageHandler messageHandler(OrderSheetSubmission orderSheetSubmission, MessageChannel barCounterChannel) {
             var messageHandler = new MessageHandler() {
                 @Override
                 public void handleMessage(Message<?> message) throws MessagingException {
@@ -42,6 +44,12 @@ public @interface EnableBrewModule {
 
                 }
             };
+
+            var observer = (Observable)barCounterChannel;
+            observer.addObserver((o, arg) -> {
+                var message = (Message<?>)arg;
+                messageHandler.handleMessage(message);
+            });
 
             return messageHandler;
         }
