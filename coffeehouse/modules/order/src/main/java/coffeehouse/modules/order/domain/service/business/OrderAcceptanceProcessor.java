@@ -28,6 +28,6 @@ class OrderAcceptanceProcessor implements OrderAcceptance {
         var order = orderRepository.findById(orderId).orElseThrow(OrderNotFoundException::new);
         order.accept();
         orderRepository.save(order);
-        barCounter.brew(order.getId());
+        barCounter.brew(order.getId()); // 기존 api 방식을 메세지 방식으로 대체할 것
     }
 }
