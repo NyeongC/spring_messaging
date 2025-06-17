@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
@@ -31,7 +32,7 @@ public @interface EnableBrewModule {
     @ComponentScan
     class BrewModuleConfiguration {
 
-
+        /* 기존 메세지 핸들러
         @Bean
         MessageHandler messageHandler(OrderSheetSubmission orderSheetSubmission, MessageChannel barCounterChannel) {
             var messageHandler = new MessageHandler() {
@@ -45,13 +46,25 @@ public @interface EnableBrewModule {
                 }
             };
 
-            var observer = (Observable)barCounterChannel;
+            var observer = (Observable) barCounterChannel;
             observer.addObserver((o, arg) -> {
-                var message = (Message<?>)arg;
+                var message = (Message<?>) arg;
                 messageHandler.handleMessage(message);
             });
 
             return messageHandler;
+        } */
+
+        @Bean
+        public IntegrationFlow requestBrewIntegration(OrderSheetSubmission orderSheetSubmission, MessageChannel barCounterChannel) {
+
+            return IntegrationFlow.from(barCounterChannel)
+                    .handle(message -> {
+                        var command = (BrewRequestCommand) message.getPayload();
+                        var brewOrderId = new OrderId(command.orderId().value());
+                        orderSheetSubmission.submit(new OrderSheetForm(brewOrderId));
+
+                    }).get();
         }
     }
 }
