@@ -54,7 +54,11 @@ public @interface EnableBrewModule {
 
             return messageHandler;
         } */
-
+        /*
+        기존의 ObservableChannel 기반 메시지 수신 로직을 Spring Integration의 **DirectChannel**로 추상화하였고,
+        Java DSL을 활용한 IntegrationFlow 구성으로 메시지를 받아 핸들러 메서드에서 처리할 수 있게 되었다.
+        이로써 메시지 흐름이 명확하게 구성되고 재사용성도 높아졌다.
+        */
         @Bean
         public IntegrationFlow requestBrewIntegration(OrderSheetSubmission orderSheetSubmission, MessageChannel barCounterChannel) {
 
