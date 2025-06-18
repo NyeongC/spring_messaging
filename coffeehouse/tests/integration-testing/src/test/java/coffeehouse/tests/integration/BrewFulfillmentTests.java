@@ -41,6 +41,7 @@ class BrewFulfillmentTests {
         var orderId = new OrderId("1a176aa8-e834-46e8-b293-0d0208ad1cd8");
 
         // when
+        // 제조 완료
         brewComplete.complete(orderId);
 
         // then

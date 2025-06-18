@@ -15,7 +15,7 @@ import java.util.Objects;
 /**
  * @author springrunner.kr@gmail.com
  */
-@Component
+
 public class BrewNotifierHttpClient implements BrewNotifier {
     private final RestTemplate restTemplate;
     private final URI brewCompletedNotificationUserUri;

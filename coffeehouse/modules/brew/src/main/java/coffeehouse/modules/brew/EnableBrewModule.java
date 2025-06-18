@@ -8,7 +8,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.env.Environment;
+import org.springframework.http.HttpMethod;
+import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.dsl.IntegrationFlow;
+import org.springframework.integration.http.dsl.Http;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
@@ -18,6 +22,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.net.URI;
 import java.util.Observable;
 
 /**
@@ -70,5 +75,38 @@ public @interface EnableBrewModule {
 
                     }).get();
         }
+
+        @Bean
+        MessageChannel brewCompletedNotifyOrderChannel() {
+            return new DirectChannel();
+        }
+
+        @Bean
+        MessageChannel brewCompletedNotifyUserChannel() {
+            return new DirectChannel();
+        }
+
+        // 이 채널에서 온 메세지를 http 어뎁터와 연결해주면 됨
+        @Bean
+        public IntegrationFlow notifyOrderIntegration(MessageChannel brewCompletedNotifyOrderChannel, Environment environment) {
+            var uri = environment.getRequiredProperty("coffeehouse.brew.notify-brew-complete-uri", URI.class);
+            return IntegrationFlow.from(brewCompletedNotifyOrderChannel)
+                    .handle(
+                            Http.outboundChannelAdapter(uri)
+                                    .httpMethod(HttpMethod.POST)
+                    ).get();
+        }
+
+        @Bean
+        public IntegrationFlow notifyUserIntegration(MessageChannel brewCompletedNotifyUserChannel, Environment environment) {
+            var uri = environment.getRequiredProperty("coffeehouse.user.notify-brew-complete-uri", URI.class);
+            return IntegrationFlow.from(brewCompletedNotifyUserChannel)
+                    .handle(
+                            Http.outboundChannelAdapter(uri)
+                                    .httpMethod(HttpMethod.POST)
+                    )
+                    .get();
+        }
+
     }
 }

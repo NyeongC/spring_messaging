@@ -27,6 +27,8 @@ dependencies {
     implementation('org.springframework:spring-webmvc')
     //implementation('org.springframework:spring-messaging')
     implementation 'org.springframework.integration:spring-integration-core'
+    // http 어뎁터
+    implementation 'org.springframework.integration:spring-integration-http'
     testImplementation('org.springframework:spring-test')
     testImplementation('org.junit.jupiter:junit-jupiter')
     testImplementation('org.mockito:mockito-junit-jupiter')
