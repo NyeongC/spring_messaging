@@ -65,14 +65,14 @@ public @interface EnableBrewModule {
         이로써 메시지 흐름이 명확하게 구성되고 재사용성도 높아졌다.
         */
         @Bean
-        public IntegrationFlow requestBrewIntegration(OrderSheetSubmission orderSheetSubmission, MessageChannel barCounterChannel) {
+        public IntegrationFlow requestBrewIntegration(OrderSheetSubmission orderSheetSubmission, MessageChannel brewRequestChannel) {
 
-            return IntegrationFlow.from(barCounterChannel)
-                    .handle(message -> {
-                        var command = (BrewRequestCommand) message.getPayload();
+            return IntegrationFlow.from(brewRequestChannel)
+                    .handle(BrewRequestCommand.class, (payload, message) -> {
+                        var command = payload;
                         var brewOrderId = new OrderId(command.orderId().value());
                         orderSheetSubmission.submit(new OrderSheetForm(brewOrderId));
-
+                        return null;
                     }).get();
         }
 

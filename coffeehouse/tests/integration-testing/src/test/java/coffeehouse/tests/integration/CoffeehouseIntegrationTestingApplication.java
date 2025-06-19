@@ -47,7 +47,7 @@ public class CoffeehouseIntegrationTestingApplication {
     @Bean
     RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory) {
         var rabbitAdmin = new RabbitAdmin(connectionFactory);
-        rabbitAdmin.declareQueue(new Queue("brwq"));
+        rabbitAdmin.declareQueue(new Queue("brew"));
         return rabbitAdmin;
     }
 

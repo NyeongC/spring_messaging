@@ -10,6 +10,6 @@ coffeehouse:
 
 spring:
   rabbitmq:
-    addresses: amqp://localhost:562
+    addresses: amqp://localhost:5672
     username: coffeehouse
     password: password
