@@ -10,22 +10,17 @@ import org.springframework.stereotype.Component;
 @Component
 public class NotificationMessagePublisher implements BrewNotifier {
 
-    // 메세지를 보낼려면 채널이 있어야함
-    private final MessageChannel brewCompletedNotifyOrderChannel;
-    private final MessageChannel brewCompletedNotifyUserChannel;
+    private final MessageChannel brewCompletedChannel;
 
-    public NotificationMessagePublisher(MessageChannel brewCompletedNotifyOrderChannel, MessageChannel brewCompletedNotifyUserChannel) {
-        this.brewCompletedNotifyOrderChannel = brewCompletedNotifyOrderChannel;
-        this.brewCompletedNotifyUserChannel = brewCompletedNotifyUserChannel;
+    public NotificationMessagePublisher(MessageChannel brewCompletedChannel) {
+        this.brewCompletedChannel = brewCompletedChannel;
     }
 
     // DTO로 감싸서 메세지 보내주기
-    
     @Override
     public void notify(OrderId orderId) {
         var brewCompletedEvent = new BrewCompletedEvent(orderId);
         var message = new GenericMessage<BrewCompletedEvent>(brewCompletedEvent);
-        brewCompletedNotifyOrderChannel.send(message);
-        brewCompletedNotifyUserChannel.send(message);
+        brewCompletedChannel.send(message);
     }
 }
