@@ -29,9 +29,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.integration.amqp.dsl.Amqp;
 import org.springframework.integration.amqp.inbound.AmqpInboundChannelAdapter;
 import org.springframework.integration.amqp.outbound.AmqpOutboundEndpoint;
+import org.springframework.integration.annotation.Router;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.channel.DirectChannel;
+import org.springframework.integration.channel.QueueChannel;
 import org.springframework.integration.dsl.IntegrationFlow;
+import org.springframework.integration.router.HeaderValueRouter;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.web.client.RestTemplate;
 
@@ -116,6 +119,19 @@ public class CoffeehouseIntegrationTestingApplication {
         return amqpOutboundEndpoint;
     }
 
+    @Bean
+    @Router(inputChannel = "amqpInboundChannel")
+    public HeaderValueRouter messageRouter() {
+        var router = new HeaderValueRouter("amqp_receivedRoutingKey");
+        router.setChannelMapping("brew", "brewRequestChannel");
+        return router;
+    }
+
+    @Bean
+    MessageChannel amqpInboundChannel() {
+        return new QueueChannel();
+    }
+
     /*@Bean
     public IntegrationFlow amqpInboundIntegrationChannelFlow(ConnectionFactory connectionFactory, MessageChannel brewRequestChannel) {
         return IntegrationFlow.from(
@@ -135,10 +151,10 @@ public class CoffeehouseIntegrationTestingApplication {
     }
 
     @Bean
-    public AmqpInboundChannelAdapter amqpInboundChannelAdapter(MessageChannel brewRequestChannel,
+    public AmqpInboundChannelAdapter amqpInboundChannelAdapter(MessageChannel amqpInboundChannel,
                                                                SimpleMessageListenerContainer amqpContainer) {
         var amqpInboundChannelAdapter = new AmqpInboundChannelAdapter(amqpContainer);
-        amqpInboundChannelAdapter.setOutputChannel(brewRequestChannel); // amqp에서 온 메세지를 brewRequestChannel에 보내줌
+        amqpInboundChannelAdapter.setOutputChannel(amqpInboundChannel); // amqp에서 온 메세지를 brewRequestChannel에 보내줌
         return amqpInboundChannelAdapter;
     }
 }
