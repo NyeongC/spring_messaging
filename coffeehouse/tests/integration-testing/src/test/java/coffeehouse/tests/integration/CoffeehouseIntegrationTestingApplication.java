@@ -19,6 +19,7 @@ import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
+import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.SpringApplication;
@@ -26,6 +27,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.integration.amqp.dsl.Amqp;
+import org.springframework.integration.amqp.inbound.AmqpInboundChannelAdapter;
+import org.springframework.integration.amqp.outbound.AmqpOutboundEndpoint;
+import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.messaging.MessageChannel;
@@ -90,17 +94,30 @@ public class CoffeehouseIntegrationTestingApplication {
     }
 
 
-    @Bean
-    public IntegrationFlow amqpOutboundIntegrationChannel(AmqpTemplate amqpTemplate, MessageChannel barCounterChannel) {
-        return IntegrationFlow.from(barCounterChannel)
-                .handle(
-                        Amqp.outboundAdapter(amqpTemplate)
-                                .routingKey("brew")
-                ).get();
-    }
+//    @Bean
+//    public IntegrationFlow amqpOutboundIntegrationChannel(AmqpTemplate amqpTemplate, MessageChannel barCounterChannel) {
+//        return IntegrationFlow.from(barCounterChannel)
+//                .handle(
+//                        Amqp.outboundAdapter(amqpTemplate)
+//                                .routingKey("brew")
+//                ).get();
+//    }
+    /*
+     * JAVADSL -> 애너테이션 변환
+     * flow가 많아지고 중복코드도 많이 발생할듯
+     * */
 
     @Bean
-    public IntegrationFlow amqpInboundIntegrationChannel(ConnectionFactory connectionFactory, MessageChannel brewRequestChannel) {
+    @ServiceActivator(inputChannel = "barCounterChannel")
+    //  @ServiceActivator 이걸 사용하면 메세지 채널에서온 메세지를 amqpOutbound 엔드포인트로 보낼 수 있음
+    public AmqpOutboundEndpoint amqpOutboundEndpoint(AmqpTemplate amqpTemplate) {
+        var amqpOutboundEndpoint = new AmqpOutboundEndpoint(amqpTemplate);
+        amqpOutboundEndpoint.setRoutingKey("brew"); // brew 라는 라우팅키로
+        return amqpOutboundEndpoint;
+    }
+
+    /*@Bean
+    public IntegrationFlow amqpInboundIntegrationChannelFlow(ConnectionFactory connectionFactory, MessageChannel brewRequestChannel) {
         return IntegrationFlow.from(
                 Amqp.inboundAdapter(connectionFactory, "brew")
         ).handle(
@@ -108,5 +125,20 @@ public class CoffeehouseIntegrationTestingApplication {
                     brewRequestChannel.send(message);
                 }
         ).get();
+    }*/
+
+    @Bean
+    SimpleMessageListenerContainer amqpContainer(ConnectionFactory connectionFactory) {
+        var amqpContainer = new SimpleMessageListenerContainer(connectionFactory);
+        amqpContainer.addQueueNames("brew");
+        return amqpContainer;
+    }
+
+    @Bean
+    public AmqpInboundChannelAdapter amqpInboundChannelAdapter(MessageChannel brewRequestChannel,
+                                                               SimpleMessageListenerContainer amqpContainer) {
+        var amqpInboundChannelAdapter = new AmqpInboundChannelAdapter(amqpContainer);
+        amqpInboundChannelAdapter.setOutputChannel(brewRequestChannel); // amqp에서 온 메세지를 brewRequestChannel에 보내줌
+        return amqpInboundChannelAdapter;
     }
 }
